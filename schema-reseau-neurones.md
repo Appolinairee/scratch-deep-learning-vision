@@ -1,31 +1,20 @@
+## Neurone unique
+
 ```mermaid
 flowchart TD
-  subgraph S["Neurone unique"]
-    I["Image"] --> V["Vectorisation"] --> X["x"]
-    W["w"] --> Z["z = w^T x + b"]
-    B["b"] --> Z
-    X --> Z
-    Z --> P["p = sigma(z)"]
-    P --> L["J(w,b)"]
-    Y["y"] --> L
-    L --> G["dJ/dw, dJ/db"]
-    G --> U1["w <- w - eta dJ/dw"]
-    G --> U2["b <- b - eta dJ/db"]
-    U1 -.-> W
-    U2 -.-> B
-  end
-
-  subgraph D["Bloc Dense"]
-    X --> D1["Dense 1 : XW + b"]
-    D1 --> A1["Activation 1"]
-    A1 --> D2["Dense 2 : XW + b"]
-    D2 --> A2["Activation 2"]
-    A2 --> OUT["Sortie"]
-    OUT --> LOSS["Loss"]
-    Y --> LOSS
-    LOSS --> BP["Backprop couche par couche"]
-    BP --> UP["Mise à jour des paramètres"]
-  end
+  I["Image"] --> V["Vectorisation"]
+  V --> X["x"]
+  W["w"] --> Z["Score z"]
+  B["b"] --> Z
+  X --> Z
+  Z --> P["Probabilite p"]
+  Y["Cible y"] --> J["Cout J(w,b)"]
+  P --> J
+  J --> G["Gradients"]
+  G --> U1["Update de w"]
+  G --> U2["Update de b"]
+  U1 -.-> W
+  U2 -.-> B
 ```
 
 $$
@@ -53,16 +42,7 @@ $$
 $$
 
 $$
-J(w,b) = -\frac{1}{m}\sum_{i=1}^{m} \left[y_i \log p_i + (1-y_i)\log(1-p_i)\right]
-$$
-
-$$
-\frac{\partial J}{\partial p_i}
-\quad\to\quad
-\frac{\partial p_i}{\partial z_i}
-\quad\to\quad
-\frac{\partial z_i}{\partial w},\;
-\frac{\partial z_i}{\partial b}
+J(w,b) = -\frac{1}{m}\sum_{i=1}^{m}\left[y_i \log p_i + (1-y_i)\log(1-p_i)\right]
 $$
 
 $$
@@ -80,40 +60,6 @@ $$
 $$
 b \leftarrow b - \eta \frac{\partial J}{\partial b}
 $$
-
-## Réseau profond : couche Dense
-
-$$
-z^{[l]} = W^{[l]} a^{[l-1]} + b^{[l]}
-$$
-
-$$
-a^{[l]} = g^{[l]}\left(z^{[l]}\right)
-$$
-
-$$
-da^{[l]} \to dz^{[l]} = da^{[l]} \odot g'\left(z^{[l]}\right)
-$$
-
-$$
-dW^{[l]} = \frac{1}{m} \, dz^{[l]} \left(a^{[l-1]}\right)^T
-$$
-
-$$
-db^{[l]} = \frac{1}{m} \sum_{i=1}^{m} dz^{[l]}_i
-$$
-
-$$
-da^{[l-1]} = \left(W^{[l]}\right)^T dz^{[l]}
-$$
-
-$$
-dz^{[L]} = a^{[L]} - y
-$$
-
-Logistic regression correspond au cas $L = 1$.
-
-Deep learning reprend la même logique, couche par couche.
 
 ## Forme vectorielle
 
@@ -134,24 +80,92 @@ p = \sigma(z)
 $$
 
 $$
-J(w,b) = -\frac{1}{m}
-\left[
-y^\top \log p + (1-y)^\top \log(1-p)
-\right]
+J(w,b) = -\frac{1}{m}\left[y^\top \log p + (1-y)^\top \log(1-p)\right]
 $$
 
 $$
-\nabla_w J = \frac{1}{m} X^\top (p-y)
+\nabla_w J = \frac{1}{m}X^\top(p-y)
 $$
 
 $$
-\frac{\partial J}{\partial b} = \frac{1}{m}\mathbf{1}^\top (p-y)
+\frac{\partial J}{\partial b} = \frac{1}{m}\mathbf{1}^\top(p-y)
+$$
+
+## Reseau dense
+
+```mermaid
+flowchart TD
+  X0["Entree x"] --> D1["Dense 1"]
+  D1 --> A1["Activation 1"]
+  A1 --> D2["Dense 2"]
+  D2 --> A2["Activation 2"]
+  A2 --> AL["Sortie a[L]"]
+  YL["Cible y"] --> JL["Cout J"]
+  AL --> JL
+  JL --> BP["Backprop"]
+  BP --> UP["Mise a jour des couches"]
+```
+
+$$
+z^{[l]} = W^{[l]} a^{[l-1]} + b^{[l]}
 $$
 
 $$
-w \leftarrow w - \eta \nabla_w J
+a^{[l]} = g^{[l]}(z^{[l]})
 $$
 
 $$
-b \leftarrow b - \eta \frac{\partial J}{\partial b}
+dz^{[L]} = a^{[L]} - y
 $$
+
+$$
+dW^{[l]} = \frac{1}{m}\,dz^{[l]}(a^{[l-1]})^\top
+$$
+
+$$
+db^{[l]} = \frac{1}{m}\sum_{i=1}^{m}dz_i^{[l]}
+$$
+
+$$
+da^{[l-1]} = (W^{[l]})^\top dz^{[l]}
+$$
+
+## Forme vectorielle dense
+
+Pour un batch de taille $m$ :
+
+$$
+A^{[0]} = X \in \mathbb{R}^{d_0 \times m}
+$$
+
+$$
+W^{[l]} \in \mathbb{R}^{d_l \times d_{l-1}},
+\qquad
+b^{[l]} \in \mathbb{R}^{d_l \times 1}
+$$
+
+$$
+Z^{[l]} = W^{[l]}A^{[l-1]} + b^{[l]}\mathbf{1}^\top
+$$
+
+$$
+A^{[l]} = g^{[l]}(Z^{[l]})
+$$
+
+$$
+dZ^{[L]} = A^{[L]} - Y
+$$
+
+$$
+dW^{[l]} = \frac{1}{m} dZ^{[l]} {A^{[l-1]}}^\top
+$$
+
+$$
+db^{[l]} = \frac{1}{m} \sum_{j=1}^{m} dZ^{[l]}_{:,j}
+$$
+
+$$
+dA^{[l-1]} = {W^{[l]}}^\top dZ^{[l]}
+$$
+
+Logistic regression correspond au cas $L = 1$.
