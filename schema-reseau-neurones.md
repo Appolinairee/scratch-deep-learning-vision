@@ -1,38 +1,31 @@
 ```mermaid
 flowchart TD
-  subgraph D[" "]
-    I["Image"] --> V["Vectorisation"]
-    V --> X["x"]
-  end
-
-  subgraph M[" "]
+  subgraph S["Neurone unique"]
+    I["Image"] --> V["Vectorisation"] --> X["x"]
     W["w"] --> Z["z = w^T x + b"]
     B["b"] --> Z
     X --> Z
     Z --> P["p = sigma(z)"]
+    P --> L["J(w,b)"]
+    Y["y"] --> L
+    L --> G["dJ/dw, dJ/db"]
+    G --> U1["w <- w - eta dJ/dw"]
+    G --> U2["b <- b - eta dJ/db"]
+    U1 -.-> W
+    U2 -.-> B
   end
 
-  subgraph C0[" "]
-    P --> BERN["P(y|x)=p^y(1-p)^(1-y)"]
-    Y["y"] --> L["J(w,b)"]
-    P --> L
-    BERN --> LL["log L"]
-    LL --> L
+  subgraph D["Bloc Dense"]
+    X --> D1["Dense 1 : XW + b"]
+    D1 --> A1["Activation 1"]
+    A1 --> D2["Dense 2 : XW + b"]
+    D2 --> A2["Activation 2"]
+    A2 --> OUT["Sortie"]
+    OUT --> LOSS["Loss"]
+    Y --> LOSS
+    LOSS --> BP["Backprop couche par couche"]
+    BP --> UP["Mise à jour des paramètres"]
   end
-
-  subgraph G[" "]
-    L --> C["dJ/dp -> dp/dz -> dz/dw, dz/db"]
-    C --> GW["dJ/dw = (1/m) sum (p_i-y_i)x_i"]
-    C --> GB["dJ/db = (1/m) sum (p_i-y_i)"]
-  end
-
-  subgraph U0[" "]
-    GW --> U["w <- w - eta dJ/dw"]
-    GB --> UB["b <- b - eta dJ/db"]
-  end
-
-  U -.-> W
-  UB -.-> B
 ```
 
 $$
@@ -87,6 +80,40 @@ $$
 $$
 b \leftarrow b - \eta \frac{\partial J}{\partial b}
 $$
+
+## Réseau profond : couche Dense
+
+$$
+z^{[l]} = W^{[l]} a^{[l-1]} + b^{[l]}
+$$
+
+$$
+a^{[l]} = g^{[l]}\left(z^{[l]}\right)
+$$
+
+$$
+da^{[l]} \to dz^{[l]} = da^{[l]} \odot g'\left(z^{[l]}\right)
+$$
+
+$$
+dW^{[l]} = \frac{1}{m} \, dz^{[l]} \left(a^{[l-1]}\right)^T
+$$
+
+$$
+db^{[l]} = \frac{1}{m} \sum_{i=1}^{m} dz^{[l]}_i
+$$
+
+$$
+da^{[l-1]} = \left(W^{[l]}\right)^T dz^{[l]}
+$$
+
+$$
+dz^{[L]} = a^{[L]} - y
+$$
+
+Logistic regression correspond au cas $L = 1$.
+
+Deep learning reprend la même logique, couche par couche.
 
 ## Forme vectorielle
 
